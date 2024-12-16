@@ -1,40 +1,59 @@
 import { Router } from "express";
-import { body } from "express-validator";
 import { BudgetController } from "../controllers/BudgetController";
 import { handleInputErrors } from "../middleware/validation";
-import { validateBudgetId } from "../middleware/budget";
+import {
+  validateBudgetExist,
+  validateBudgetId,
+  validateBudgetInput,
+} from "../middleware/budget";
+import { ExpensesController } from "../controllers/ExpenseController";
+import {
+  validateExpenseExist,
+  validateExpenseId,
+  validateExpenseInput,
+} from "../middleware/expenses";
 
 const router = Router();
+
+router.param("budgetId", validateBudgetId);
+router.param("budgetId", validateBudgetExist);
+router.param("expenseId", validateExpenseId);
+router.param("expenseId", validateExpenseExist);
 
 router.get("/", BudgetController.getAll);
 
 router.post(
   "/",
-  body("name").notEmpty().withMessage("El nombre es obligatorio"),
-  body("amount")
-    .notEmpty()
-    .withMessage("La cantidad es obligatoria")
-    .custom((value) => value > 0)
-    .withMessage("La cantidad no puede ser negativa"),
+  validateBudgetInput,
   handleInputErrors,
   BudgetController.create
 );
 
-router.get("/:id", validateBudgetId, BudgetController.getById);
+router.get("/:budgetId", BudgetController.getById);
 
 router.put(
-  "/:id",
-  validateBudgetId,
-  body("name").notEmpty().withMessage("El nombre es obligatorio"),
-  body("amount")
-    .notEmpty()
-    .withMessage("La cantidad es obligatoria")
-    .custom((value) => value > 0)
-    .withMessage("La cantidad no puede ser negativa"),
+  "/:budgetId",
+  validateBudgetInput,
   handleInputErrors,
   BudgetController.updateById
 );
 
-router.delete("/:id", validateBudgetId, BudgetController.deleteById);
+router.delete("/:budgetId", BudgetController.deleteById);
+
+// Routes for expenses
+router.post(
+  "/:budgetId/expenses",
+  validateExpenseInput,
+  handleInputErrors,
+  ExpensesController.create
+);
+router.get("/:budgetId/expenses/:expenseId", ExpensesController.getById);
+router.put(
+  "/:budgetId/expenses/:expenseId",
+  validateExpenseInput,
+  handleInputErrors,
+  ExpensesController.updateById
+);
+router.delete("/:budgetId/expenses/:expenseId", ExpensesController.deleteById);
 
 export default router;

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import Budget from "../models/Budget";
+import Expense from "../models/Expense";
 
 export class BudgetController {
   static getAll = async (req: Request, res: Response): Promise<any> => {
@@ -19,44 +20,24 @@ export class BudgetController {
       await budget.save();
       res.status(201).json("Presupuesto Creado Correctamente");
     } catch (error) {
-      // console.log(error)
       res.status(500).json({ error: "Hubo un error" });
     }
   };
 
   static getById = async (req: Request, res: Response): Promise<any> => {
-    const { id } = req.params;
-    const budget = await Budget.findByPk(id);
+    const budget = await Budget.findByPk(req.budget.id, {
+      include: [Expense],
+    });
     res.json(budget);
   };
 
   static updateById = async (req: Request, res: Response): Promise<any> => {
-    try {
-      const budget = await Budget.findByPk(req.params.id);
-      if (!budget) {
-        const error = new Error("No se encontro el presupuesto");
-        return res.status(404).json({ error: error.message });
-      }
-
-      await budget.update(req.body);
-
-      res.json("Presupuesto actualizado correctamente");
-    } catch (error) {
-      res.status(500).json({ error: "Hubo un error" });
-    }
+    await req.budget.update(req.body);
+    res.json("Presupuesto actualizado correctamente");
   };
 
   static deleteById = async (req: Request, res: Response): Promise<any> => {
-    try {
-      const budget = await Budget.findByPk(req.params.id);
-      if (!budget) {
-        const error = new Error("No se encontro el presupuesto");
-        return res.status(404).json({ error: error.message });
-      }
-      await budget.destroy();
-      res.json("Presupuesto eliminado correctamente");
-    } catch (error) {
-      res.status(500).json({ error: "Hubo un error" });
-    }
+    await req.budget.destroy();
+    res.json("Presupuesto eliminado correctamente");
   };
 }
