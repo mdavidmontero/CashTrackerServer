@@ -12,9 +12,10 @@ import {
   validateExpenseId,
   validateExpenseInput,
 } from "../middleware/expenses";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
-
+router.use(authenticate);
 router.param("budgetId", validateBudgetId);
 router.param("budgetId", validateBudgetExist);
 router.param("expenseId", validateExpenseId);
@@ -40,7 +41,7 @@ router.put(
 
 router.delete("/:budgetId", BudgetController.deleteById);
 
-// Routes for expenses
+/** Routes for expenses */
 router.post(
   "/:budgetId/expenses",
   validateExpenseInput,
