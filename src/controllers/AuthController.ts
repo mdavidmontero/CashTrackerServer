@@ -7,27 +7,30 @@ import { generateJWT } from "../utils/jwt";
 export class AuthController {
   static createAccount = async (req: Request, res: Response): Promise<any> => {
     const { email, password } = req.body;
-    const userExist = await User.findOne({ where: { email } });
-    if (userExist) {
-      const error = new Error("El usuario ya existe");
-      res.status(409).json({ error: error.message });
+    const userExists = await User.findOne({ where: { email } });
+    if (userExists) {
+      const error = new Error("Un usuario con ese email ya esta registrado");
+      return res.status(409).json({ error: error.message });
     }
+
     try {
-      const user = new User(req.body);
+      const user = await User.create(req.body);
       user.password = await hashPassword(password);
-      user.token = generateToken();
+      const token = generateToken();
+      user.token = token;
+
       await user.save();
       await AuthEmail.sendConfirmationEmail({
         name: user.name,
         email: user.email,
         token: user.token,
       });
-      res.status(201).json("Cuenta creada correctamente");
+
+      res.status(201).json("Cuenta Creada Correctamente");
     } catch (error) {
       res.status(500).json({ error: "Hubo un error" });
     }
   };
-
   static confirmAccount = async (req: Request, res: Response): Promise<any> => {
     const { token } = req.body;
 

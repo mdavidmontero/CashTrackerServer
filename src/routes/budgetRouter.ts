@@ -2,13 +2,15 @@ import { Router } from "express";
 import { BudgetController } from "../controllers/BudgetController";
 import { handleInputErrors } from "../middleware/validation";
 import {
-  validateBudgetExist,
+  hasAccess,
+  validateBudgetExists,
   validateBudgetId,
   validateBudgetInput,
 } from "../middleware/budget";
 import { ExpensesController } from "../controllers/ExpenseController";
 import {
-  validateExpenseExist,
+  belongsToBudget,
+  validateExpenseExists,
   validateExpenseId,
   validateExpenseInput,
 } from "../middleware/expenses";
@@ -17,9 +19,11 @@ import { authenticate } from "../middleware/auth";
 const router = Router();
 router.use(authenticate);
 router.param("budgetId", validateBudgetId);
-router.param("budgetId", validateBudgetExist);
+router.param("budgetId", validateBudgetExists);
+router.param("budgetId", hasAccess);
 router.param("expenseId", validateExpenseId);
-router.param("expenseId", validateExpenseExist);
+router.param("expenseId", validateExpenseExists);
+router.param("expenseId", belongsToBudget);
 
 router.get("/", BudgetController.getAll);
 
@@ -56,5 +60,4 @@ router.put(
   ExpensesController.updateById
 );
 router.delete("/:budgetId/expenses/:expenseId", ExpensesController.deleteById);
-
 export default router;

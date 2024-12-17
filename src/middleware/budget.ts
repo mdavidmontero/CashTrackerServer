@@ -14,7 +14,7 @@ export const validateBudgetId = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<any> => {
+) => {
   await param("budgetId")
     .isInt()
     .withMessage("ID no válido")
@@ -32,21 +32,23 @@ export const validateBudgetId = async (
   next();
 };
 
-export const validateBudgetExist = async (
+export const validateBudgetExists = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<any> => {
+) => {
   try {
     const { budgetId } = req.params;
     const budget = await Budget.findByPk(budgetId);
+
     if (!budget) {
-      const error = new Error("No se encontro el presupuesto");
+      const error = new Error("Presupuesto no encontrado");
       return res.status(404).json({ error: error.message });
     }
     req.budget = budget;
     next();
   } catch (error) {
+    // console.log(error)
     res.status(500).json({ error: "Hubo un error" });
   }
 };
@@ -55,16 +57,28 @@ export const validateBudgetInput = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<any> => {
+) => {
   await body("name")
     .notEmpty()
-    .withMessage("El nombre es obligatorio")
+    .withMessage("El nombre del presupuesto no puede ir vacio")
     .run(req);
+
   await body("amount")
     .notEmpty()
-    .withMessage("La cantidad es obligatoria")
+    .withMessage("La cantidad del presupuesto no puede ir vacia")
+    .isNumeric()
+    .withMessage("Cantidad no válida")
     .custom((value) => value > 0)
-    .withMessage("La cantidad no puede ser negativa")
+    .withMessage("El presupuesto debe ser mayor a 0")
     .run(req);
+
   next();
 };
+
+export function hasAccess(req: Request, res: Response, next: NextFunction) {
+  if (req.budget.userId !== req.user.id) {
+    const error = new Error("Acción no válida");
+    return res.status(401).json({ error: error.message });
+  }
+  next();
+}
